@@ -44,9 +44,6 @@ function _bindSelf( self ) {
 
 function _pollingNotify( self ) {
     self._addPolling( function pollingNotify() {
-        console.log( 'pollingNotify: ', self._canWrite, self._canRead );
-
-
         var buffer = self._buffer;
 
         if ( self._ending() ) {
@@ -70,34 +67,34 @@ function _pollingNotify( self ) {
     } );
 }
 
-limitStream.prototype._pollingList = [];
-
-limitStream.prototype._pollingId = null;
+limitStream.prototype._pollingList = [ /* 0: setTimeoutId */ null ];
 
 limitStream.prototype._polling = function _polling( list ) {
-    var p = 0;
+    var p = 1;
     var len = list.length;
     while ( p < len ) list[ p++ ]();
-    this._pollingId = setTimeout( _polling, 10000, list );
+    list[ 0 ] = setTimeout( _polling, 10000, list );
 };
 
 limitStream.prototype._addPolling = function ( fnNotify ) {
     var list = this._pollingList;
     list.push( fnNotify );
-    if ( !this._pollingId ) this._pollingId = setTimeout( this._polling, 10000, list );
+    if ( !list[ 0 ] ) list[ 0 ] = setTimeout( this._polling, 10000, list );
 };
 
 limitStream.prototype._rmPolling = function _polling( fnNotify ) {
     var list = this._pollingList;
     var idx = list.indexOf( fnNotify );
-    list.splice( idx, 1 );
-    if ( list.length === 0 ) clearTimeout( this._pollingId );
+    if ( ~idx ) list.splice( idx, 1 );
+    if ( list.length === 1 ) {
+        clearTimeout( list[ 0 ] );
+        list[ 0 ] = null;
+    }
 };
 
 limitStream.prototype._ending = function ( bisWrite ) {
     if ( bisWrite === true ) this._canWrite = false;
 
-    console.log( this._canWrite, this._buffer ? this._buffer.length : null, this._canRead )
     if ( this._canWrite || this._buffer ) return false;
     if ( !this._canRead ) return true;
 
