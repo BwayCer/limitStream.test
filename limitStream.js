@@ -143,9 +143,6 @@ limitStream.prototype._read = function ( numSize ) {
         return;
     }
 
-    var rtnPush;
-    limitReadableSize
-
     var lenBuf = buffer.length;
 
     if ( numSize > lenBuf ) {
